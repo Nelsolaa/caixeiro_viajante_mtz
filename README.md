@@ -31,22 +31,28 @@ A formulação completa com LaTeX está documentada na primeira célula do noteb
 ```text
 caixeiro_viajante_mtz/
 ├── README.md                       # este arquivo
-├── problema.md                     # enunciado do trabalho
 ├── .gitignore                      # ignorar arquivos desnecessários
-├── dados-gerais.csv                # entrada: num_vertices
-├── dados-arcos.csv                 # entrada: origem, destino, custo
-└── caixeiro_viajante_mtz.ipynb     # implementação principal (entrega)
+├── caixeiro_viajante_mtz.ipynb     # implementação principal (entrega)
+├── dados/
+│   ├── dados-gerais.csv            # entrada: num_vertices
+│   └── dados-arcos.csv             # entrada: origem, destino, custo
+├── docs/
+│   └── problema.md                 # enunciado do trabalho
+└── referencia/
+    ├── caminho_minimo.ipynb        # notebook de referência da aula do professor
+    ├── dados-gerais.csv            # dados de referência da aula (caminho mínimo)
+    └── dados-arcos.csv             # dados de referência da aula (caminho mínimo)
 ```
 
 ## Requisitos
 
 - Python 3.8+
 - Jupyter Notebook
-- Bibliotecas: `ortools`, `pandas` (instaladas pela primeira célula do notebook)
+- Bibliotecas: `ortools`, `pandas`
 
 ## Como executar
 
-1. Certifique-se de que os arquivos `dados-gerais.csv` e `dados-arcos.csv` estão no mesmo diretório do notebook.
+1. Certifique-se de que os arquivos de dados estão localizados na pasta `dados/` (`dados/dados-gerais.csv` e `dados/dados-arcos.csv`).
 2. Abra o terminal no diretório do projeto e execute:
 
 ```bash
