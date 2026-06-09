@@ -41,3 +41,14 @@ Este documento contém perguntas de nível avançado sobre a formulação Miller
 
 ### Q19. Relaxação Linear e Variáveis Fracionárias no MTZ
 > **Pergunta:** *"Ao resolver a relaxação linear do MTZ (onde as variáveis x_ij deixam de ser binárias e passam a ser contínuas no intervalo [0, 1]), o solver SCIP frequentemente encontra soluções com valores fracionários (ex: x_ij = 0.5) que ainda assim satisfazem a desigualdade do MTZ. Por que a relaxação linear do MTZ é considerada 'frouxa' (weak) comparada a outras formulações?"*
+
+---
+
+### Q20. Código Prático: Ativação Condicional de Arcos
+> **Pergunta:** *"Suponha que, devido a acordos de tráfego aéreo, se o caixeiro utilizar o trecho de ida da cidade 2 para a cidade 3, ele seja obrigado a utilizar o trecho da cidade 4 para a cidade 5 na mesma rota. Escreva a equação linear dessa restrição e como programá-la no OR-Tools."*
+
+---
+
+### Q21. Conceito Prático: Inconsistência nos Dados de Entrada (Inviabilidade 0 = 1)
+> **Pergunta:** *"Suponha que o arquivo de dados gerais informe que existem 10 vértices, mas o arquivo de arcos forneça conexões apenas entre os vértices de 1 a 5. Por que o modelo original com restrição de grau rígido 'entrada_v' e 'saida_v' se tornará inviável? Como ajustar o código para evitar essa falha?"*
+

@@ -143,7 +143,68 @@ Este documento reúne todas as perguntas conceituais e práticas estudadas para 
 ### Q12. "Como está configurado o solver de vocês? Qual biblioteca e algoritmo?"
 * **Resposta:** Utilizamos a biblioteca **Google OR-Tools** (módulo `pywraplp`) configurando o solver open-source **SCIP**. Ele resolve o problema usando o algoritmo **Branch-and-Cut** (combinação de Branch-and-Bound com Planos de Corte).
 
+### Q13. "O que acontece se o grafo de entrada não for completo?"
+* **Resposta:** *"O modelo MTZ assume que o grafo é completo. Se faltarem arcos no arquivo `dados-arcos.csv`, nosso script criará apenas as variáveis $x_{ij}$ correspondentes aos arcos presentes. Caso não existam caminhos ligando todos os nós em um ciclo único viável, o solver retornará que o problema é inviável (`pywraplp.Solver.INFEASIBLE`)."*
+
 ---
 
-### Q13. "O que acontece se o grafo de entrada não for completo?"
-* **Resposta:** O código funciona normalmente, gerando variáveis apenas para os arcos descritos no CSV. Se ainda restar pelo menos um Ciclo Hamiltoniano viável no grafo esparso, o solver encontrará a rota ótima. Caso contrário, ele retornará o status de **Inviável (Infeasible)**.
+## 📝 5. Análise Comparativa com as Questões da Prova Real (Relato de Colega)
+
+Esta seção analisa as questões aplicadas na prova do colega do dia 08/06/2026, comparando-as com o nosso material de revisão e fornecendo as soluções teóricas e práticas (código).
+
+### Questão da Prova 1: Rodar o notebook com uma nova planilha de dados e relatar a rota ótima
+* **Nível de Dificuldade:** Baixo.
+* **Comparação com nossa revisão:** É o comportamento padrão do notebook. Como o nosso notebook foi parametrizado com a variável global `cidade_origem` (Célula 5), qualquer alteração na origem ou nos dados pode ser simulada instantaneamente bastando alterar essa variável e reexecutar a resolução.
+* **O que fazer na hora:** Salve a planilha fornecida na pasta `dados/` ou ajuste a célula de leitura de CSV para apontar para o novo arquivo (ex: `pd.read_csv('dados/dados-novos.csv')`).
+
+---
+
+### Questão da Prova 2: Restrição de Precedência (Visitar o vértice 2 antes do vértice 10)
+* **Nível de Dificuldade:** Médio.
+* **Comparação com nossa revisão:** É **idêntica** à **Q14** de nossa revisão (onde propusemos visitar a cidade 4 antes da 2). O nível de complexidade matemática e de código é exatamente o mesmo.
+* **A) Equação Matemática da Restrição:**
+  Como a variável $u_i$ representa a ordem de visitação do nó $i$, se o vértice 2 deve ser visitado antes do 10, a ordem de visita de 2 deve ser menor do que a de 10:
+  $$u_2 < u_{10} \quad \text{ou, em formato linear/inteiro,} \quad u_2 \leq u_{10} - 1$$
+* **B) Implementação no OR-Tools (Código):**
+  Insira na célula de montagem de restrições (ou antes do `Solve`):
+  ```python
+  solver.Add(u[2] <= u[10] - 1)
+  ```
+
+---
+
+### Questão da Prova 3: Ativação Condicional de Arcos (Se o arco $(i,j)$ for visitado, então o arco $(k,l)$ também deve ser visitado)
+* **Nível de Dificuldade:** Alto (Exige modelagem de lógica condicional).
+* **Comparação com nossa revisão:** **Nova Questão!** Não constava originalmente no nosso caderno de revisão e eleva consideravelmente o nível da nossa preparação.
+* **A) Equação Matemática da Restrição:**
+  Dado que as variáveis de decisão $x_{ij}$ e $x_{kl}$ são binárias ($0$ ou $1$), a implicação lógica $x_{ij} \implies x_{kl}$ (se $x_{ij} = 1$, então $x_{kl} = 1$) é expressa algebricamente por:
+  $$x_{ij} \leq x_{kl}$$
+  * Se $x_{ij} = 1$, força $1 \leq x_{kl} \implies x_{kl} = 1$.
+  * Se $x_{ij} = 0$, a restrição fica $0 \leq x_{kl}$, que é sempre satisfeita para variáveis binárias, permitindo que $x_{kl}$ seja $0$ ou $1$.
+* **B) Implementação no OR-Tools (Código):**
+  Suponha que, se percorrermos o arco $2 \to 3$, devemos obrigatoriamente percorrer o arco $4 \to 5$:
+  ```python
+  solver.Add(x[(2, 3)] <= x[(4, 5)])
+  ```
+
+---
+
+### Questão da Prova 4: Incompatibilidade de Dados na Segunda Entrada (Inviabilidade do Solver)
+* **Nível de Dificuldade:** Alto (Diagnóstico e Depuração).
+* **Comparação com nossa revisão:** **Nova Questão!** Aborda uma situação prática onde o notebook original falha em virtude de dados de teste inconsistentes.
+* **Causa do Problema:**
+  Se o arquivo geral aponta `num_vertices = 10` e criamos vértices de $1$ a $10$, mas o arquivo de arcos contém apenas conexões para cidades de $1$ a $5$ (sem menção de $6$ a $10$), a restrição de grau de saída criada para $v \geq 6$:
+  ```python
+  for v in vertices:
+      restricao = solver.Constraint(1, 1, f'saida_{v}')
+      # ... tenta associar variáveis x[(v, j)] que não existem no CSV ...
+  ```
+  Resulta em uma restrição vazia: $0 = 1$. Por ser impossível satisfazer $0 = 1$, o solver SCIP declara imediatamente que o modelo é **Inviável (INFEASIBLE)**.
+* **Como Prevenir/Ajustar no Código:**
+  Em vez de usar o número estático `num_vertices` do arquivo geral, crie a lista de vértices dinamicamente a partir dos nós reais presentes no CSV de arcos:
+  ```python
+  # Extrair lista dinâmica de vértices reais
+  vertices_reais = sorted(list(set(df_dados_arcos['origem'].unique()).union(set(df_dados_arcos['destino'].unique()))))
+  num_vertices = len(vertices_reais)
+  ```
+  Dessa forma, o código se adapta aos nós que de fato existem nos dados dos arcos, evitando criar equações vazias do tipo $0=1$.

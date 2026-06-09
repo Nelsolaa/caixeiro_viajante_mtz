@@ -126,3 +126,43 @@ Este documento contém as respostas detalhadas, demonstrações matemáticas e c
   
   Isso significa que, se as variáveis forem fracionárias, o solver consegue facilmente definir valores reais para as ordens `u` (por exemplo, `u_2 = 3.0`, `u_3 = 3.0`, `u_4 = 3.0` satisfaz todas as restrições perfeitamente) sem gerar contradição. 
   Como o MTZ permite esses subciclos fracionários na relaxação linear, o limite inferior (*lower bound*) do modelo fica muito longe do ótimo real, forçando o algoritmo de **Branch-and-Bound** a fazer muito mais ramificações e buscas para encontrar e provar a solução inteira ótima.
+
+---
+
+### Q20. Código Prático: Ativação Condicional de Arcos
+> **Pergunta:** *"Suponha que, devido a acordos de tráfego aéreo, se o caixeiro utilizar o trecho de ida da cidade 2 para a cidade 3, ele seja obrigado a utilizar o trecho da cidade 4 para a cidade 5 na mesma rota. Escreva a equação linear dessa restrição e como programá-la no OR-Tools."*
+
+* **Explicação Teórica:**
+  A implicação lógica "se $x_{23} = 1$, então $x_{45} = 1$" é modelada algebricamente limitando a variável independente pela variável dependente. Como ambas são binárias ($0$ ou $1$):
+  
+  $$x_{23} \leq x_{45}$$
+  
+  * Se $x_{23} = 1$, a restrição impõe $1 \leq x_{45} \implies x_{45} = 1$ (forçado).
+  * Se $x_{23} = 0$, a restrição torna-se $0 \leq x_{45}$, permitindo $x_{45}$ ser $0$ ou $1$ livremente.
+
+* **Ajuste de Código (no OR-Tools):**
+  ```python
+  solver.Add(x[(2, 3)] <= x[(4, 5)])
+  ```
+
+---
+
+### Q21. Conceito Prático: Inconsistência nos Dados de Entrada (Inviabilidade 0 = 1)
+> **Pergunta:** *"Suponha que o arquivo de dados gerais informe que existem 10 vértices, mas o arquivo de arcos forneça conexões apenas entre os vértices de 1 a 5. Por que o modelo original com restrição de grau rígido 'entrada_v' e 'saida_v' se tornará inviável? Como ajustar o código para evitar essa falha?"*
+
+* **Explicação Teórica:**
+  Quando criamos uma restrição de igualdade para cada vértice $v \in \{1, \ldots, 10\}$ exigindo exatamente 1 arco de entrada e 1 de saída, o solver tenta somar as variáveis $x_{ij}$ que começam ou terminam em $v$. Se os vértices $6, 7, 8, 9, 10$ não possuem nenhum arco associado no CSV de arcos, nenhuma variável correspondente será criada. 
+  A restrição de saída para o nó 6, por exemplo, ficará sem termos no lado esquerdo, traduzindo-se matematicamente em:
+  
+  $$0 = 1$$
+  
+  Por ser uma contradição lógica insatisfeitível, o solver SCIP retornará imediatamente que o modelo é **Inviável (Infeasible)**.
+
+* **Ajuste de Código para Prevenção:**
+  Em vez de usar a lista de vértices estática gerada pelo tamanho geral, extraímos os vértices ativos dinamicamente a partir dos arcos do CSV:
+  ```python
+  # Cria a lista de vértices reais com base nos arcos fornecidos
+  vertices_reais = sorted(list(set(df_dados_arcos['origem'].unique()).union(set(df_dados_arcos['destino'].unique()))))
+  num_vertices = len(vertices_reais)
+  ```
+
